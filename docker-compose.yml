@@ -1,0 +1,45 @@
+version: "3.9"  
+services:
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - ~/apps/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=S3cret
+      - POSTGRES_USER=citizix_user
+      - POSTGRES_DB=citizix_db
+    network_mode: host
+  
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    network_mode: host
+      
+  app:
+    image: test-api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://192.168.1.9:5432/db_test_api_app
+      - SPRING_DATASOURCE_USERNAME=citizix_user
+      - SPRING_DATASOURCE_PASSWORD=S3cret
+      - SPRING_JPA_GENERATE-DDL=false
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_RABBITMQ_HOST=192.168.1.9
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest 
+      - TEST_RABBITMQ_EXCHANGE=test.exchange
+      - TEST_RABBITMQ_QUEUE=test.queue
+      - TEST_RABBITMQ_ROUTINGKEY=test.routingkey
+    network_mode: host
